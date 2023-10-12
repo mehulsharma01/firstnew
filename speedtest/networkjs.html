@@ -1,0 +1,129 @@
+<html>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js" integrity="sha512-pumBsjNRGGqkPzKHndZMaAG+bir374sORyzM3uulLV14lN5LyykqNk8eEeUlUkB3U0M4FApyaHraT65ihJhDpQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <div>
+        <div>
+            current: <span id="current"></span>
+        </div>
+        <div>
+            current avg: <span id="avg"></span>
+        </div>
+        <div>
+            result: <span id="result"></span>
+        </div>
+    </div>
+    <div>
+        <button id="start_stop_restart" type="button">Start</button>
+    </div>
+
+
+    </html>
+
+
+<script src="network.min.js"></script>
+
+<script>
+window.speedstate = "stop";
+var settings = {
+
+    endpoint: 'server.php', // Where is located the PHP file.
+
+    // The complete settings list is available below.
+    download: {
+        delay: 8000,
+
+        data: {
+            // The amount of data to initially use.
+            size: 2 * 1024 * 1024, // 2 MB
+
+            // If the measure period can't reach the delay defined in the settings,
+            // the data amount is multiplied by the following value.
+            multiplier: 2.5
+        }
+    }
+
+};
+
+// Create a new Network instance by providing an optional object.
+var net = new Network(settings);
+
+// Listen for the "end" event which provides the calculated latencies.
+// net.latency.on('end', function(averageLatency, allLatencies) {
+//     // "allLatencies" is an array containing the five calculated latencies in
+//     // milliseconds. They're used to determine an average latency.
+//     console.log('end', averageLatency, allLatencies);
+// });
+
+// Once all the configuration is done, start the requests for this module.
+// net.latency.start();
+
+// It is possible to chain functions for all the modules, here's an example with the
+// upload module.
+// net.upload
+//      .on('start', function(dataSize) {
+//          console.log('start', dataSize);
+//      })
+//      .on('progress', function(averageSpeed, instantSpeed) {
+//          // Every bandwidth measure are in Mega BYTES per second!
+//          console.log('progress', averageSpeed, instantSpeed);
+//      })
+//      .on('restart', function(dataSize) {
+//          // The restart event is triggered when the module didn't have time
+//          // (according to the `delay` option) to take all the measures. A new
+//          // request will start with data size increased by the multiplier value.
+//          console.log('restart', dataSize);
+//      })
+//      .on('end', function(averageSpeed, allInstantSpeeds) {
+//          console.log('end', averageSpeed, allInstantSpeeds);
+//      })
+//      .start();
+
+// You can also cancel a request (except for the "latency" module).
+// net.upload.abort();
+speedtest = function() {
+    net.download
+     .on('start', function(dataSize) {
+         console.log('start', dataSize);
+         window.speedstate = "start";
+         $('#start_stop_restart').text("stop");
+         $('#current, #avg, #result').text("");
+     })
+     .on('progress', function(averageSpeed, instantSpeed) {
+         console.log('progress', averageSpeed, instantSpeed);
+         $('#current').text(instantSpeed/100000 + ' Mbps');
+         $('#avg').text(averageSpeed/100000 + ' Mbps');
+     })
+     .on('restart', function(dataSize) {
+         console.log('restart', dataSize);
+         console.log(dataSize)
+        //  net.download.abort();
+
+     })
+     .on('end', function(averageSpeed, allInstantSpeeds) {
+         console.log('end', averageSpeed, allInstantSpeeds);
+        //  alert(averageSpeed/100000);
+        $('#current, #avg, #result').text("");
+        $('#result').text(averageSpeed/100000 + ' Mbps');
+        window.speedstate = "stop";
+        $('#start_stop_restart').text("restart");
+
+     })
+     .start();
+}
+
+$("#start_stop_restart").on("click", function(){
+    if (window.speedstate == "start") {
+        net.download.abort();
+        $('#current, #avg, #result').text("");
+        window.speedstate = "stop";
+        $('#start_stop_restart').text("restart");
+
+    }
+    else {
+        speedtest();
+    }
+})
+
+
+// net.download.abort();
+</script>
